@@ -4,8 +4,7 @@ import PIL.ImageFont as ImageFont
 from PIL import ImageColor
 import numpy as np
 
-STANDARD_COLORS = [
-]
+STANDARD_COLORS = []
 
 
 def draw_text(draw,

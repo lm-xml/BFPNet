@@ -9,8 +9,6 @@ from lxml import etree
 class VOCDataSet(Dataset):
     def __init__(self, voc_root, year="2012", transforms=None, train_set='train.txt', mode='train'):
         assert year in ["2007", "2012"], "year must be in ['2007', '2012']"
-        # 增加容错能力
-        # self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}")
         # self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}", "SAR-ship")
         self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}", "SSDD")
         # self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}", "RSDD")

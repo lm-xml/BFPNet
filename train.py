@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 
 import transforms
 from my_dataset import VOCDataSet
-from src.ssd_model6 import SSD300, Backbone
-# from src.SFPN import SSD300, Backbone
+from src.model import SSD300, Backbone
 import train_utils.train_eval_utils as utils
 from src.utils import dboxes300_coco
 from train_utils import get_coco_api_from_dataset
@@ -17,17 +16,13 @@ from torch.utils.tensorboard import SummaryWriter
 import shutil
 
 def create_model(num_classes=2,pretrained=False):
-    # https://download.pytorch.org/models/resnet50-19c8e357.pth
     pre_ssd_path = ""
     backbone = Backbone()
-    # block = BasicBlock()
-    # backbone = Backbone(pretrain_path=pre_ssd_path)
     model = SSD300(backbone=backbone, num_classes=num_classes)
     if pretrained == True:
         if os.path.exists(pre_ssd_path) is False:
-            raise FileNotFoundError("nvidia_ssdpyt_fp32_190826.pt not find in {}".format(pre_ssd_path))
+            raise FileNotFoundError("nvidia.pt not find in {}".format(pre_ssd_path))
         pre_model_dict = torch.load(pre_ssd_path, map_location='cpu')
-        # pre_weights_dict = pre_model_dict["model"]
         pre_weights_dict = pre_model_dict
 
         del_conf_loc_dict = {}
@@ -100,7 +95,7 @@ def main(parser_data):
     train_data_loader = torch.utils.data.DataLoader(train_dataset,
                                                     batch_size=batch_size,
                                                     shuffle=True,
-                                                    num_workers=nw,    # 原先是nw
+                                                    num_workers=nw,
                                                     collate_fn=train_dataset.collate_fn,
                                                     drop_last=drop_last)
     val_dataset = VOCDataSet(VOC_root, "2012", data_transform['val'], train_set='test.txt', mode='train')
@@ -116,7 +111,7 @@ def main(parser_data):
     pg = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(pg, lr=args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay, nesterov=True)
-    lf = lambda x: ((1 + math.cos(x * math.pi / parser_data.epochs)) / 2) * (1 - args.lf) + args.lf  # cosine,args.lf是倍率
+    lf = lambda x: ((1 + math.cos(x * math.pi / parser_data.epochs)) / 2) * (1 - args.lf) + args.lf
     lr_scheduler = scheduler.LambdaLR(optimizer, lr_lambda=lf)
 
     if parser_data.resume != "":
@@ -136,7 +131,7 @@ def main(parser_data):
         m_loc_loss, m_con_loss, m_cos_loss, mean_loss, lr = utils.train_one_epoch(model=model, optimizer=optimizer,
                                               data_loader=train_data_loader,
                                               device=device, epoch=epoch,
-                                              print_freq=500, warmup=True)  # 默认warmup=True，会影响第一回合的学习率
+                                              print_freq=500, warmup=True)
         train_loss.append(mean_loss.item())
         learning_rate.append(lr)
 
@@ -175,7 +170,7 @@ def main(parser_data):
                 'optimizer': optimizer.state_dict(),
                 'lr_scheduler': lr_scheduler.state_dict(),
                 'epoch': epoch}
-            torch.save(save_files, "./save_weights/ssd300-{}.pth".format(epoch))
+            torch.save(save_files, "./save_weights/BFPNet-{}.pth".format(epoch))
 
     # plot loss and lr curve
     if len(train_loss) != 0 and len(learning_rate) != 0:
@@ -195,9 +190,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__)
 
-    parser.add_argument('--device', default='cuda:1', help='device')   # ssd_model里也有个cuda
+    parser.add_argument('--device', default='cuda:1', help='device')
     parser.add_argument('--num_classes', default=1, type=int, help='num_classes')
-    parser.add_argument('--data-path', default='/workspace/SSD/', help='dataset')
+    parser.add_argument('--data-path', default='', help='dataset')
     parser.add_argument('--output-dir', default='./save_weights', help='path where to save')
     parser.add_argument('--resume', default='', type=str, help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, help='start epoch')
